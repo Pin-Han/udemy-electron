@@ -1,5 +1,6 @@
 // Modules
 const { app, BrowserWindow } = require("electron");
+const windowStateKeeper = require("electron-window-state");
 
 setTimeout(() => {
   console.log("Checking ready: " + app.isReady());
@@ -11,9 +12,17 @@ let mainWindow, secondaryWindow;
 
 // Create a new BrowserWindow when `app` is ready
 function createWindow() {
+  // window state manager
+  let winState = windowStateKeeper({
+    defaultHeight: 800,
+    defaultWidth: 1000,
+  });
+
   mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 800,
+    width: winState.width,
+    height: winState.height,
+    x: winState.x,
+    y: winState.y,
     minWidth: 300,
     minHeight: 150,
     webPreferences: {
@@ -28,6 +37,8 @@ function createWindow() {
     backgroundColor: "#24ceb9",
     frame: false,
   });
+
+  winState.manage(mainWindow);
 
   secondaryWindow = new BrowserWindow({
     width: 700,
@@ -64,9 +75,9 @@ function createWindow() {
     console.log("Second win focused");
   });
 
-  secondaryWindow.on("closed", () => {
-    mainWindow.maximize();
-  });
+  // secondaryWindow.on("closed", () => {
+  //   mainWindow.maximize();
+  // });
 }
 
 app.on("browser-window-blur", (e) => {
