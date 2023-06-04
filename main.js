@@ -7,7 +7,7 @@ setTimeout(() => {
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow, secondaryWindow;
+let mainWindow;
 
 // Create a new BrowserWindow when `app` is ready
 function createWindow() {
@@ -21,35 +21,17 @@ function createWindow() {
       contextIsolation: false,
       nodeIntegration: true,
     },
+    titleBarStyle: "hidden",
     // show: false,
     backgroundColor: "#24ceb9",
+    frame: false,
   });
-  secondaryWindow = new BrowserWindow({
-    width: 600,
-    height: 300,
-    webPreferences: {
-      contextIsolation: false,
-      nodeIntegration: true,
-    },
-    backgroundColor: "#24ceb9",
-    show: false,
-    parent: mainWindow,
-    modal: true,
-  });
+
   // Load index.html into the new BrowserWindow
   mainWindow.loadFile("index.html");
-  secondaryWindow.loadFile("secondary.html");
 
   // Open DevTools - Remove for PRODUCTION!
   // mainWindow.webContents.openDevTools();
-
-  setTimeout(() => {
-    secondaryWindow.show();
-    setTimeout(() => {
-      secondaryWindow.close();
-      secondaryWindow = null;
-    }, 3000);
-  }, 2000);
 
   // secondaryWindow.once("ready-to-show", secondaryWindow.show);
 
