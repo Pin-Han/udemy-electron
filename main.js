@@ -1,6 +1,6 @@
 // Modules
 const { app, BrowserWindow } = require("electron");
-const windowStateKeeper = require("electron-window-state");
+// const windowStateKeeper = require("electron-window-state");
 
 setTimeout(() => {
   console.log("Checking ready: " + app.isReady());
@@ -8,21 +8,17 @@ setTimeout(() => {
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow, secondaryWindow;
+let mainWindow;
 
 // Create a new BrowserWindow when `app` is ready
 function createWindow() {
   // window state manager
-  let winState = windowStateKeeper({
-    defaultHeight: 800,
-    defaultWidth: 1000,
-  });
 
   mainWindow = new BrowserWindow({
-    width: winState.width,
-    height: winState.height,
-    x: winState.x,
-    y: winState.y,
+    width: 1000,
+    height: 800,
+    x: 100,
+    y: 100,
     minWidth: 300,
     minHeight: 150,
     webPreferences: {
@@ -38,41 +34,59 @@ function createWindow() {
     frame: false,
   });
 
-  winState.manage(mainWindow);
-
-  secondaryWindow = new BrowserWindow({
-    width: 700,
-    height: 800,
-    webPreferences: {
-      // --- !! IMPORTANT !! ---
-      // Disable 'contextIsolation' to allow 'nodeIntegration'
-      // 'contextIsolation' defaults to "true" as from Electron v12
-      contextIsolation: false,
-      nodeIntegration: true,
-    },
-  });
+  // secondaryWindow = new BrowserWindow({
+  //   width: 700,
+  //   height: 800,
+  //   webPreferences: {
+  //     // --- !! IMPORTANT !! ---
+  //     // Disable 'contextIsolation' to allow 'nodeIntegration'
+  //     // 'contextIsolation' defaults to "true" as from Electron v12
+  //     contextIsolation: false,
+  //     nodeIntegration: true,
+  //   },
+  // });
   // Load index.html into the new BrowserWindow
-  mainWindow.loadFile("index.html");
-  secondaryWindow.loadFile("index.html");
+  // mainWindow.loadFile("index.html");
+  mainWindow.loadURL("https://httpbin.org/basic-auth/user/passwd");
+
+  // secondaryWindow.loadFile("index.html");
 
   // Open DevTools - Remove for PRODUCTION!
   // mainWindow.webContents.openDevTools();
 
   // secondaryWindow.once("ready-to-show", secondaryWindow.show);
 
+  let wc = mainWindow.webContents;
+  console.log(wc);
+
+  wc.on("login", (e, request, authInfo, callback) => {
+    console.log("Logged in:");
+    callback("user", "passwd");
+  });
+  wc.on("did-navigate", (e, url, statusCode, message) => {
+    console.log(`navigated to ${url}`);
+    console.log(statusCode);
+  });
+  // wc.on("before-input-event", (e, input) => {
+  //   console.log(input.key, input.type);
+  // });
+  // wc.on("new-window", (e, url) => {
+  //   e.preventDefault()
+  //   console.log(`open new window ${url}`);
+  // });
+  // wc.on("did-finish-load", () => {
+  //   console.log("Content fully loaded");
+  // });
+  // wc.on("dom-ready", () => {
+  //   console.log("Dom Load");
+  // });
   // Listen for window being closed
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
 
-  secondaryWindow.on("closed", () => {
-    secondaryWindow = null;
-  });
   mainWindow.on("focus", () => {
     console.log("Main win focused");
-  });
-  secondaryWindow.on("focus", () => {
-    console.log("Second win focused");
   });
 
   // secondaryWindow.on("closed", () => {
