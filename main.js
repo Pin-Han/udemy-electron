@@ -3,7 +3,8 @@ const { app, BrowserWindow, session } = require("electron");
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow, secWindow;
+let mainWindow;
+// let secWindow;
 
 // Create a new BrowserWindow when `app` is ready
 function createWindow() {
@@ -22,6 +23,22 @@ function createWindow() {
       });
   };
 
+  ses.on("will-download", (e, downloadItem, webContents) => {
+    console.log("Starting download");
+    let fileName = downloadItem.getFilename();
+    let fileSize = downloadItem.getTotalBytes();
+    downloadItem.setSavePath(app.getPath("desktop") + `/${fileName}`);
+
+    downloadItem.on("updated", (e, state) => {
+      let received = downloadItem.getReceivedBytes();
+      if (state === "progressing" && received) {
+        let progress = Math.round((received / fileSize) * 100);
+        console.log(progress);
+        webContents.executeJavaScript(`window.progress.value=${progress}`);
+      }
+    });
+  });
+
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 800,
@@ -34,18 +51,18 @@ function createWindow() {
     },
   });
 
-  secWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    x: 200,
-    y: 200,
-    webPreferences: {
-      contextIsolation: false,
-      nodeIntegration: true,
-      // session: customSes,
-      partition: "persist:part1",
-    },
-  });
+  // secWindow = new BrowserWindow({
+  //   width: 800,
+  //   height: 600,
+  //   x: 200,
+  //   y: 200,
+  //   webPreferences: {
+  //     contextIsolation: false,
+  //     nodeIntegration: true,
+  //     // session: customSes,
+  //     partition: "persist:part1",
+  //   },
+  // });
 
   // let ses = mainWindow.webContents.session;
   // let ses2 = secWindow.webContents.session;
@@ -79,9 +96,9 @@ function createWindow() {
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
-  secWindow.on("closed", () => {
-    secWindow = null;
-  });
+  // secWindow.on("closed", () => {
+  //   secWindow = null;
+  // });
 }
 
 // Electron `app` is ready
