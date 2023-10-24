@@ -1,26 +1,30 @@
 // Modules
-const { app, BrowserWindow } = require("electron");
-// const windowStateKeeper = require("electron-window-state");
-
-setTimeout(() => {
-  console.log("Checking ready: " + app.isReady());
-}, 2000);
+const { app, BrowserWindow, session } = require("electron");
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow;
+let mainWindow, secWindow;
 
 // Create a new BrowserWindow when `app` is ready
 function createWindow() {
-  // window state manager
+  // let customSes = session.fromPartition("persisit:part1");
+
+  let ses = session.defaultSession;
+
+  let getCookies = () => {
+    ses.cookies
+      .get({})
+      .then((cookies) => {
+        console.log("cookie", cookies);
+      })
+      .catch((errors) => {
+        console.log(errors);
+      });
+  };
 
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 800,
-    x: 100,
-    y: 100,
-    minWidth: 300,
-    minHeight: 150,
     webPreferences: {
       // --- !! IMPORTANT !! ---
       // Disable 'contextIsolation' to allow 'nodeIntegration'
@@ -28,97 +32,60 @@ function createWindow() {
       contextIsolation: false,
       nodeIntegration: true,
     },
-    titleBarStyle: "hidden",
-    // show: false,
-    backgroundColor: "#24ceb9",
-    frame: false,
   });
 
-  // secondaryWindow = new BrowserWindow({
-  //   width: 700,
-  //   height: 800,
-  //   webPreferences: {
-  //     // --- !! IMPORTANT !! ---
-  //     // Disable 'contextIsolation' to allow 'nodeIntegration'
-  //     // 'contextIsolation' defaults to "true" as from Electron v12
-  //     contextIsolation: false,
-  //     nodeIntegration: true,
-  //   },
-  // });
-  // Load index.html into the new BrowserWindow
-  // mainWindow.loadFile("index.html");
-  mainWindow.loadURL("https://httpbin.org/basic-auth/user/passwd");
+  secWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    x: 200,
+    y: 200,
+    webPreferences: {
+      contextIsolation: false,
+      nodeIntegration: true,
+      // session: customSes,
+      partition: "persist:part1",
+    },
+  });
 
-  // secondaryWindow.loadFile("index.html");
+  // let ses = mainWindow.webContents.session;
+  // let ses2 = secWindow.webContents.session;
+  // let defaultSes = session.defaultSession;
+
+  console.log("session", ses);
+  // ses.clearStorageData();
+
+  // console.log(Object.is(ses, customSes));
+
+  // Load index.html into the new BrowserWindow
+  mainWindow.loadFile("index.html");
+  // mainWindow.loadURL("https://github.com");
+  let cookie = {
+    url: "https://myappdomain.com",
+    name: "cookie",
+    value: "electron",
+  };
+  // ses.cookies.set(cookie).then(() => {
+  //   getCookies();
+  // });
+  mainWindow.webContents.on("did-finish-load", (e) => {
+    getCookies();
+  });
 
   // Open DevTools - Remove for PRODUCTION!
-  // mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools();
+  // secWindow.webContents.openDevTools();
 
-  // secondaryWindow.once("ready-to-show", secondaryWindow.show);
-
-  let wc = mainWindow.webContents;
-  console.log(wc);
-
-  wc.on("login", (e, request, authInfo, callback) => {
-    console.log("Logged in:");
-    callback("user", "passwd");
-  });
-  wc.on("did-navigate", (e, url, statusCode, message) => {
-    console.log(`navigated to ${url}`);
-    console.log(statusCode);
-  });
-  // wc.on("before-input-event", (e, input) => {
-  //   console.log(input.key, input.type);
-  // });
-  // wc.on("new-window", (e, url) => {
-  //   e.preventDefault()
-  //   console.log(`open new window ${url}`);
-  // });
-  // wc.on("did-finish-load", () => {
-  //   console.log("Content fully loaded");
-  // });
-  // wc.on("dom-ready", () => {
-  //   console.log("Dom Load");
-  // });
   // Listen for window being closed
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
-
-  mainWindow.on("focus", () => {
-    console.log("Main win focused");
+  secWindow.on("closed", () => {
+    secWindow = null;
   });
-
-  // secondaryWindow.on("closed", () => {
-  //   mainWindow.maximize();
-  // });
 }
 
-app.on("browser-window-blur", (e) => {
-  console.log("App unfocus");
-  // setTimeout(() => {
-  //   app.quit();
-  // }, 3000);
-});
-
-// app.on("browser-window-focus", (e) => {
-//   console.log("App focused");
-// });
-
-app.on("before-quit", (e) => {
-  console.log("Preventing app from quitting");
-  e.preventDefault();
-});
-
 // Electron `app` is ready
-app.on("ready", () => {
-  console.log(app.getPath("desktop"));
-  console.log(app.getPath("music"));
-  console.log(app.getPath("temp"));
-  console.log(app.getPath("userData"));
-  console.log("App is ready");
-  createWindow();
-});
+app.on("ready", createWindow);
 
 // Quit when all windows are closed - (Not macOS - Darwin)
 app.on("window-all-closed", () => {
